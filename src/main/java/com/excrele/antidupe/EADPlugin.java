@@ -14,7 +14,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-
 /**
  * EADPlugin - Excrele Anti Dupe, a Minecraft plugin to prevent item duplication exploits.
  *
@@ -36,15 +35,8 @@ import org.bukkit.plugin.java.JavaPlugin;
  *   - Interactions: Only cancel if the held item is valuable (e.g., diamond tier or higher).
  *   - Bypass: All checks respect 'ead.bypass' permission.
  *
- * Note: This is a basic implementation. For more advanced anti-dupe, consider database tracking or more events.
- * Always test thoroughly in a development environment.
- *
- * Author: Professional Minecraft Plugin Developer
- * Version: 1.2
- * Date: September 14, 2025
  */
 public class EADPlugin extends JavaPlugin implements Listener {
-
     // Helper method to broadcast alert messages to permitted players
     private void sendAlert(String message, ChatColor color) {
         String coloredMessage = ChatColor.GOLD + "[EAD] " + color + message + ChatColor.RESET;
@@ -56,7 +48,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
         // Also log to console for admins
         getLogger().info(coloredMessage);
     }
-
     @Override
     public void onEnable() {
         // Register the plugin's event listeners
@@ -69,14 +60,12 @@ public class EADPlugin extends JavaPlugin implements Listener {
         // Double-check: Ensure Bukkit is running the correct version (optional, for compatibility)
         // Note: In a real plugin, add version checks here if needed
     }
-
     @Override
     public void onDisable() {
         // Clean up resources if necessary (though minimal in this plugin)
         // Log the plugin deactivation
         getLogger().info("EADPlugin has been disabled.");
     }
-
     /**
      * Event Handler for Player Death
      * Prevents duplication on death by clearing the player's inventory and experience.
@@ -91,23 +80,18 @@ public class EADPlugin extends JavaPlugin implements Listener {
         if (player.hasPermission("ead.bypass")) {
             return;
         }
-
         // Clear the drops to prevent any item retention
         event.getDrops().clear();
         event.setKeepInventory(false); // Ensure inventory is not kept
         event.setKeepLevel(false);     // Drop experience to prevent XP duping
-
         // Additional check: Clear the player's inventory manually for safety
         player.getInventory().clear();
         player.setTotalExperience(0);
-
         // Send high-severity alert
         sendAlert("§cHigh Alert: " + player.getName() + " died - inventory cleared to prevent duping.", ChatColor.RED);
-
         // Log the event for monitoring potential exploits
         getLogger().warning("Player " + player.getName() + " died - inventory cleared to prevent duping.");
     }
-
     /**
      * Event Handler for Inventory Clicks
      * Monitors clicks in crafting and brewing inventories to prevent dupe exploits.
@@ -120,16 +104,12 @@ public class EADPlugin extends JavaPlugin implements Listener {
         // Check if the inventory is a crafting or brewing table
         if (event.getInventory().getType() == InventoryType.CRAFTING ||
                 event.getInventory().getType() == InventoryType.BREWING) {
-
             Player player = (Player) event.getWhoClicked();
-
             // Bypass check
             if (player.hasPermission("ead.bypass")) {
                 return;
             }
-
             ItemStack currentItem = event.getCurrentItem();
-
             // Mitigation: Only flag if shift click or hotbar swap, AND item is stackable with amount >1
             if ((event.isShiftClick() || event.getHotbarButton() != -1) &&
                     currentItem != null && currentItem.getType().isItem() &&
@@ -149,7 +129,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
             }
         }
     }
-
     /**
      * Event Handler for Player Dropping Items
      * Prevents dropping items in certain scenarios, like during teleportation or in portals.
@@ -161,12 +140,10 @@ public class EADPlugin extends JavaPlugin implements Listener {
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         ItemStack droppedItem = event.getItemDrop().getItemStack();
-
         // Bypass check
         if (player.hasPermission("ead.bypass")) {
             return;
         }
-
         // Mitigation: Only cancel if in creative AND dropping stackable item with amount >1
         if (player.getGameMode().toString().equals("CREATIVE") &&
                 droppedItem.getType().isItem() && droppedItem.getMaxStackSize() > 1 &&
@@ -182,7 +159,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
             getLogger().warning("Cancelled item drop by " + player.getName() + " - potential exploit detected.");
         }
     }
-
     /**
      * Event Handler for Player Quit
      * Clears inventory on quit to prevent duping via force-quit during transactions.
@@ -193,12 +169,10 @@ public class EADPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-
         // Bypass check
         if (player.hasPermission("ead.bypass")) {
             return;
         }
-
         // Mitigation: Only clear if inventory is not mostly empty (count non-air items)
         int itemCount = 0;
         for (ItemStack item : player.getInventory().getContents()) {
@@ -211,7 +185,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
                 itemCount++;
             }
         }
-
         if (itemCount > 10) {  // Threshold for "full enough" to warrant clearing
             // Clear inventory and ender chest for thoroughness
             player.getInventory().clear();
@@ -224,7 +197,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
             getLogger().info("Player " + player.getName() + " quit - inventory cleared to prevent duping.");
         }
     }
-
     /**
      * Event Handler for Player Interactions
      * Monitors block interactions that could lead to duping, like pistons pushing items or portal use.
@@ -235,12 +207,10 @@ public class EADPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-
         // Bypass check
         if (player.hasPermission("ead.bypass")) {
             return;
         }
-
         // Check if interacting with a piston or portal
         if (event.hasBlock() && (event.getClickedBlock().getType() == Material.PISTON ||
                 event.getClickedBlock().getType() == Material.END_PORTAL_FRAME ||
@@ -256,7 +226,6 @@ public class EADPlugin extends JavaPlugin implements Listener {
                     isValuable = true;
                 }
             }
-
             if (isValuable) {
                 event.setCancelled(true);
                 player.sendMessage(ChatColor.RED + "[EAD] Interaction cancelled to prevent duplication.");
